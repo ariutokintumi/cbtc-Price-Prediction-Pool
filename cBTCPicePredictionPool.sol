@@ -7,7 +7,6 @@ pragma solidity ^0.8.20;
  * Author: ariutokintumi <3
  */
 
-// Oracle feed registry
 interface IFeedRegistry {
     function latestRoundData(address base, address quote)
         external
@@ -21,11 +20,11 @@ interface IFeedRegistry {
         );
 }
 
-
 /**
- * @dev ReentrancyGuard helps prevent reentrant calls to a function.
+ * @title ReentrancyGuard
+ * @dev Contract module that helps prevent reentrant calls to a function.
  */
-abstract contract ReentrancyGuard {
+contract ReentrancyGuard {
     uint256 private constant _NOT_ENTERED = 1;
     uint256 private constant _ENTERED = 2;
     uint256 private _status;
@@ -34,9 +33,6 @@ abstract contract ReentrancyGuard {
         _status = _NOT_ENTERED;
     }
 
-    /**
-     * @dev Prevents a contract from calling itself, directly or indirectly.
-     */
     modifier nonReentrant() {
         require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
 
@@ -48,6 +44,55 @@ abstract contract ReentrancyGuard {
     }
 }
 
+/**
+ * @title MockFeedRegistry
+ * @dev Mock implementation of the IFeedRegistry interface for testing purposes.
+ */
+contract MockFeedRegistry is IFeedRegistry {
+    // Mapping to store mock prices based on base and quote addresses
+    mapping(address => mapping(address => int256)) private prices;
+
+    /**
+     * @dev Sets the mock price for a given base and quote pair.
+     * @param base The base asset address.
+     * @param quote The quote asset address.
+     * @param price The mock price to set.
+     */
+    function setMockPrice(address base, address quote, int256 price) external {
+        prices[base][quote] = price;
+    }
+
+    /**
+     * @dev Returns the latest round data for a given base and quote pair.
+     * @param base The base asset address.
+     * @param quote The quote asset address.
+     * @return roundId Mock round ID.
+     * @return answer The mock price.
+     * @return startedAt Mock start timestamp.
+     * @return updatedAt Mock updated timestamp.
+     * @return answeredInRound Mock answered in round ID.
+     */
+    function latestRoundData(address base, address quote)
+        external
+        view
+        override
+        returns (
+            uint80 roundId,
+            int256 answer,      // price
+            uint256 startedAt,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        )
+    {
+        require(prices[base][quote] > 0, "Price not set for this pair");
+        return (1, prices[base][quote], block.timestamp, block.timestamp, 1);
+    }
+}
+
+/**
+ * @title BTCPriceBetting
+ * @dev Decentralized betting contract for predicting Bitcoin price movements.
+ */
 contract BTCPriceBetting is ReentrancyGuard {
     // Bets storage
     struct Bet {
@@ -103,6 +148,10 @@ contract BTCPriceBetting is ReentrancyGuard {
     event BetSettled(uint256 indexed id, uint256[] winningOptions, address indexed executor);
     event RewardClaimed(uint256 indexed id, address indexed claimant, uint256 amount);
 
+    /**
+     * @dev Constructor sets the Feed Registry Oracle address.
+     * @param _feedRegistry Address of the Feed Registry Oracle.
+     */
     constructor(address _feedRegistry) {
         require(_feedRegistry != address(0), "Invalid feed registry address");
         feedRegistry = IFeedRegistry(_feedRegistry);
@@ -145,9 +194,8 @@ contract BTCPriceBetting is ReentrancyGuard {
 
     /**
      * @dev Function to participate in an existing bet.
-     * @notice The sender must send N.NNPPPNNN cBTC where NNN is the bet id and PPP is the option.
      * @param option The option chosen by the bettor (0 to PPP).
-     * @param betId The id of the bet to participate in.
+     * @param betId The ID of the bet to participate in.
      */
     function placeBet(uint256 option, uint256 betId) external payable {
         uint256 value = msg.value;
@@ -181,8 +229,7 @@ contract BTCPriceBetting is ReentrancyGuard {
 
     /**
      * @dev Function to settle a bet after its duration has ended.
-     * @notice Can be called by anyone after the bet end time.
-     * @param NNN The id of the bet to settle.
+     * @param NNN The ID of the bet to settle.
      */
     function settleBet(uint256 NNN) external nonReentrant {
         Bet storage bet = bets[NNN];
@@ -246,7 +293,7 @@ contract BTCPriceBetting is ReentrancyGuard {
 
     /**
      * @dev Function for winners to claim their reward.
-     * @param NNN The id of the bet to claim reward from.
+     * @param NNN The ID of the bet to claim reward from.
      */
     function claimReward(uint256 NNN) external nonReentrant {
         Bet storage bet = bets[NNN];
@@ -300,7 +347,7 @@ contract BTCPriceBetting is ReentrancyGuard {
 
     /**
      * @dev External view function to get information about a specific bet.
-     * @param NNN The id of the bet to retrieve information for.
+     * @param NNN The ID of the bet to retrieve information for.
      * @return betInfo A BetInfo struct containing the bet details.
      */
     function getBetInfo(uint256 NNN) external view returns (BetInfo memory betInfo) {
@@ -321,9 +368,9 @@ contract BTCPriceBetting is ReentrancyGuard {
         });
     }
 
-   /**
+    /**
      * @dev External view function to get all active (unsettled) bet IDs.
-     * @return activeIds An array of active bet ids.
+     * @return activeIds An array of active bet IDs.
      */
     function getActiveBetIds() external view returns (uint256[] memory activeIds) {
         uint256 totalBets = betIds.length;
