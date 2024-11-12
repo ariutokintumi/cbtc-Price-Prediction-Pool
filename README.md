@@ -3,10 +3,85 @@
 ## Contract Integration into Your dApp
 
 ### Contract Address
-*to deploy*
+MockFeedRegistry: 0x767dad5e959f206fb6671cc3419497c1f0bb8329
+
+BTCPriceBetting: 0xfb3f44c8125c37f5746bdce8d6149ab9676b140d
 
 ### Contract ABI
-*to deploy*
+```
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "base",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "quote",
+                "type": "address"
+            },
+            {
+                "internalType": "int256",
+                "name": "price",
+                "type": "int256"
+            }
+        ],
+        "name": "setMockPrice",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "base",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "quote",
+                "type": "address"
+            }
+        ],
+        "name": "latestRoundData",
+        "outputs": [
+            {
+                "internalType": "uint80",
+                "name": "roundId",
+                "type": "uint80"
+            },
+            {
+                "internalType": "int256",
+                "name": "answer",
+                "type": "int256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "startedAt",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "updatedAt",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint80",
+                "name": "answeredInRound",
+                "type": "uint80"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]
+```
+
+
+
 
 ## Prerequisites
 
